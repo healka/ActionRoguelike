@@ -22,6 +22,10 @@ ASCharacter::ASCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
+
+	GetCharacterMovement()->JumpZVelocity = 600.f; // You can adjust the value to see if it makes a difference
+	GetCharacterMovement()->AirControl = 0.2f;    // Optional, but helps with air control
+
 }
 
 // Called when the game starts or when spawned
@@ -48,6 +52,11 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+
+	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
 }
 
 void ASCharacter::MoveForward(float Value)
@@ -68,5 +77,33 @@ void ASCharacter::MoveRight(float Value)
 	FVector RightVector = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::Y);
 
 	AddMovementInput(RightVector, Value);
+}
+
+void ASCharacter::PrimaryAttack()
+{
+
+	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+
+	// Spawn the projectile
+	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+}
+
+
+void ASCharacter::Jump()
+{
+	if (CanJump())
+	{
+		Super::Jump();
+		UE_LOG(LogTemp, Warning, TEXT("Jumping"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot jump right now!"));
+	}
 }
 
